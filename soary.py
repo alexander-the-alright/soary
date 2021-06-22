@@ -2,13 +2,15 @@
  =====================================================================
  Auth: Alex Celani
  File: soary.py
- Revn: 02-18-2021  1.0
+ Revn: 06-11-2021  1.2
  Func: Play Sorry! with Emma <3
 
- TODO: create
+ TODO: COMMENT
        research networking
        research graphics
-       comment go()
+       make test folder
+       unify prompts
+       collision detection
  =====================================================================
  CHANGE LOG
  ---------------------------------------------------------------------
@@ -18,107 +20,28 @@
              wrote testing while loop
              wrote simple input parsing
              wrote move:, leave:, and swap:
+ 06-08-2021: simplified go() CONSIDERABLY
+             commented go()
+             changed Sorry! command to sorry
+ 06-11-2021: wrote split() and split:
+             changed piecesE to piecesO (enemy to opponent)
 
  =====================================================================
 """
 
-# used for drawing cards
-import random
+from helper.functions import *
 
 
-def generate():
-    global cards
-    
-    # Start with list of all cards
-    cards = list( range( 1, 13 ) ) + ['Sorry!']
-    del cards[5]    # take out 6 and 9 cards
-    del cards[8]
-    cards *= 4      # four of each card
-    cards += [1]    # include an extra 1 card
+start = 'start'
+home = 'home'
 
-def draw():
-    global cards
+user = 'r'
+opponent = 'b'
 
-    # If we're out of cards, announce it and remake the deck
-    if len( cards ) is 0:
-        print( 'Shuffling!' )
-        generate()
+cards = generate()      # init deck of cards
+piecesU = { '1':start, '2':start, '3':start, '4':start }
+piecesO = { '1':start, '2':start, '3':start, '4':20 }
 
-    # pick the place of a random card
-    index = random.randint( 0, len( cards ) - 1 )
-    card = cards[index]     # find card at that place
-    
-    del cards[index]        # remove that card
-
-    return card             # return that card
-
-def decide( card ):
-    dec = [ 'move' ]    # Every card (but Sorry!) makes you move
-
-    # 1's and 2's can also leave home
-    if card in [1,2]:
-        dec.append( 'leave' )
-    elif card is 7:             # 7's can split
-        dec.append( 'split' )
-    elif card is 11:            # 11's can swap
-        dec.append( 'swap' )
-    elif card == 'Sorry!':      # Reassign for Sorry!
-        dec = [ 'Sorry!' ]
-
-    return dec
-
-def go( old, card ):
-    
-    # Keep track of old position
-    x = old[0]
-    y = old[1]
-
-    # Upper Left corner (blue)
-    if x is 0:
-        if y + card <= 15:
-            newX = x
-            newY = y + card
-        else:
-            newX = y + card - 15
-            newY = 15
-        return (newX, newY)
-    # Lower Right corner (green)
-    if x is 15:
-        if y - card >= 0:
-            newX = x
-            newY = y - card
-        else:
-            newX = x + y - card
-            newY = 0
-        return (newX, newY)
-
-    # Upper Right corner (yellow)
-    if y is 15:
-        if x + card <= 15:
-            newX = x + card
-            newY = y
-        else:
-            newX = 15
-            newY = y - ( card - 15 + x )
-    # Lower Left corner (red)
-    if y is 0:
-        if x - card >= 0:
-            newX = x - card
-            newY = y
-        else:
-            newX = 0
-            newY = card - x
-
-    return (newX, newY)
-
-
-
-cards = []      # initialize array of cards
-piecesU = { '1':(-1,-1), '2':(-1,-1), '3':(-1,-1), '4':(-1,-1) }
-#piecesE = { '1':(-1,-1), '2':(-1,-1), '3':(-1,-1), '4':(-1,-1) }
-piecesE = { '1':(-1,-1), '2':(-1,-1), '3':(-1,-1), '4':(6,6) }
-generate()      # init deck
-    
 
 try:
     # Test loop
@@ -129,41 +52,69 @@ try:
         decision = decide( card )   # What can I do with the card?
         
         if 'move' in decision:      # if I can move...
+
             print( 'move' )
             # Print the pawns that can move and their coordinates
+            
             for key in sorted( piecesU.keys() ):
-                if not -1 in piecesU[key]:
-                    print( 'r' + key + ':', piecesU[key] )
+                if not piecesU[key] is start:
+                    print( user + key + ':', piecesU[key] )
             print()
+            
         if 'swap' in decision:      # if I can swap...
+
             print( 'swap' )
             # Print the pawns that can swap and their coordinates
-
             for key in sorted( piecesU.keys() ):
-                if not -1 in piecesU[key]:
-                    print( 'r' + key + ':', piecesU[key] )
+                if not piecesU[key] is start:
+                    print( user + key + ':', piecesU[key] )
+                    
             for i in range(20):
                 print( '-', end = '' )
+                
             print( '\nwith' )
-            for key in sorted( piecesE.keys() ):
-                if not -1 in piecesE[key]:
-                    print( 'b' + key + ':', piecesE[key] )
+            for key in sorted( piecesO.keys() ):
+                if not piecesO[key] is start:
+                    print( opponent + key + ':', piecesO[key] )
             print()
+            
         if 'split' in decision:
-            continue
+
+            print( 'split' )
+            # Print the pawns that can move and their coordinates
+            
+            for key in sorted( piecesU.keys() ):
+                if not piecesU[key] is start:
+                    print( user + key + ':', piecesU[key] )
+            print()
+        
         if 'leave' in decision:
+            
             print( 'leave' )
+            
             # Print the pawns that can leave
             for key in sorted( piecesU.keys() ):
-                if -1 in piecesU[key]:
-                    print( 'r' + key + ': home' )
+                if piecesU[key] is start:
+                    print( user + key + ': start' )
             print()
-        if 'Sorry!' in decision:
-            print( 'Sorry!' )
+            
+        if 'sorry' in decision:
+
+            print( 'sorry' )
+            
             # Print the pawns that can Sorry! a mf
             for key in sorted( piecesU.keys() ):
-                if -1 in piecesU[key]:
-                    print( 'r' + key + ': home' )
+                if piecesU[key] is start:
+                    print( user + key + ': start' )
+                    
+            for i in range(20):
+                print( '-', end = '' )
+            print()
+            
+            for key in sorted( piecesO.keys() ):
+                if not piecesO[key] is start:
+                    print( opponent + key + ':', piecesO[key] )
+
             print()
 
         # Take user input
@@ -176,7 +127,7 @@ try:
         # If the user types the wrong thing, redraw
         # FIX
         if not move[0] in decision:
-            print( 'Bad!' )
+            print( 'Bad!\n' )
             continue
 
         if 'move' == move[0]:
@@ -188,8 +139,8 @@ try:
         #   move r1
         #   move g3
         
-            # Don't let pawns in home "move" and crash the game
-            if -1 in piecesU[move[1][1]]:
+            # Don't let pawns in start "move" and crash the game
+            if piecesU[move[1][1]] is start:
                 print( 'Bad!' )
                 continue
             
@@ -197,8 +148,8 @@ try:
             piecesU.update( { move[1][1]:newPosition } )
             
             for key in sorted( piecesU.keys() ):
-                if not -1 in piecesU[key]:
-                    print( 'r' + key + ':', piecesU[key] )
+                if not piecesU[key] is start:
+                    print( user + key + ':', piecesU[key] )
             print()
         elif 'swap' == move[0]:
         # signature
@@ -212,16 +163,16 @@ try:
         #   swap g3 y3
 
             temp = piecesU[move[1][1]]
-            piecesU.update( { move[1][1]:piecesE[move[2][1]] } )
-            piecesE.update( { move[2][1]:temp } )
+            piecesU.update( { move[1][1]:piecesO[move[2][1]] } )
+            piecesO.update( { move[2][1]:temp } )
             
             for key in sorted( piecesU.keys() ):
-                if not -1 in piecesU[key]:
-                    print( 'r' + key + ':', piecesU[key] )
+                if not piecesU[key] is start:
+                    print( user + key + ':', piecesU[key] )
         elif 'split' == move[0]:
         # signature
         #   split px1 y1 px2 [y2]
-        #       p1 is the   colour pawn -> r, b, y, g
+        #       p  is the   colour pawn -> r, b, y, g
         #       x1 is first number pawn -> 1, 2, 3, 4
         #       x2 is first number pawn -> 1, 2, 3, 4
         #       y1 is the first split
@@ -232,8 +183,17 @@ try:
         #   split r1 3 r2 4 
         #   split r3 1 r1
         
-            continue
+
+            newPosition1 = go( piecesU[move[1][1]], int( move[2] ) )
+            piecesU.update( { move[1][1]: newPosition1 } )
+            
+
+            newPosition2 = go( piecesU[move[3][1]], 7 - int( move[2] ) )
+            piecesU.update( { move[3][1]: newPosition2 } )
+            
             print()
+
+            
         elif 'leave' == move[0]:
         # signature
         #   leave px
@@ -243,28 +203,38 @@ try:
         #   leave r2
         #   leave g3
         
-            piecesU.update( { move[1][1]:(0,0) } )
+            piecesU.update( { move[1][1]:0 } )
             
             for key in sorted( piecesU.keys() ):
-                if -1 in piecesU[key]:
-                    print( 'r' + key + ': home' )
+                if piecesU[key] is start:
+                    print( user + key + ': start' )
                 else:
-                    print( 'r' + key + ':', piecesU[key] )
+                    print( user + key + ':', piecesU[key] )
             print()
-        elif 'Sorry!' == move[0]:
+        elif 'sorry' == move[0]:
         # signature
         #   sorry px [p2x2]
         #       p  is the other colour pawn -> r, b, y, g
         #       x  is the other number pawn -> 1, 2, 3, 4
-        #       p2 is the users colour pawn -> 4, b, y, g
+        #       p2 is the users colour pawn -> r, b, y, g
         #       x2 is the users number pawn -> 1, 2, 3, 4
         # examples
         #   sorry r2
         #   sorry r2 g3
-        
+
+            position = piecesO[move[2][1]]
+            piecesU.update( { move[1][1]:position } )
+            piecesO.update( { move[2][1]:start } )
+
+            
             for key in sorted( piecesU.keys() ):
-                if -1 in piecesU[key]:
-                    print( 'r' + key + ': home' )
+                print( user + key + ':', piecesU[key] )
+                
+            print()
+
+            for key in sorted( piecesO.keys() ):
+                print( opponent + key + ':', piecesO[key] )
+                
             print()
             
 except KeyboardInterrupt:
